@@ -10,7 +10,7 @@ lst_error = []
 
 def agregarError(tipo, descripcion, linea, columna):
     global lst_error
-    #new_error = TokenError(tipo,descripcion,linea,columna)
+    new_error = TokenError(tipo,descripcion,linea,columna)
     new_error = ''
     lst_error.append(new_error)
 
@@ -42,11 +42,46 @@ reservadas = {
     'true': 'TRUE',
     'false': 'FALSE',
     'parse':'PARSE',
+    'length':'LENGTH',
     'trunc':'TRUNC',
     'global':'GLOBAL',
     'local': 'LOCALR' 
 }
 
+tokens = [
+    # noreservadas
+    'MAS',
+    'MENOS',
+    'MULTIPLICACION',
+    'DIVISION',
+    'POTENCIA',
+    'MODULO',
+    'MAYOR',
+    'MENOR',
+    'IGUAL',
+    'MAYORIGUAL',
+    'MENORIGUAL',
+    'IGUALIGUAL',
+    'DIFERENTE',
+    'DOBLEPUNTO',
+    'PUNTOYCOMA',
+    'PARIZQ',
+    'PARDER',
+    'CORIZQ',
+    'CORDER',
+    'COMA',
+    'PUNTO',
+    'AND',
+    'OR',
+    'NOT',
+    # Datos
+    'DECIMAL',
+    'ENTERO',
+    'CADENA',
+    'ID',
+    'CARACTER',
+    'DOSPUNTOS',
+] + list(reservadas.values())
 
 t_PUNTOYCOMA = r';'
 t_DOSPUNTOS = r':'
@@ -144,7 +179,7 @@ precedence = (
     ('left', 'MENOR', 'MENORIGUAL', 'MAYOR', 'MAYORIGUAL'),
     ('left', 'MAS', 'MENOS'),
     ('left', 'MULTIPLICACION', 'DIVISION', 'MODULO'),
-    ('left', 'POTENCIA','SQRT'),
+    ('left', 'POTENCIA'),
     ('right','UMENOS' )
 )
 #inicio
@@ -350,7 +385,7 @@ def p_elseif3(p):
     p[0] = [p[1]]
 
 def p_elif2(p):
-    'aux : ELSEIF operacion instrucciones'
+    'aux : ELSE IF operacion instrucciones'
     p[0] = SentenciaIf(p[2],p[3],p.lineno(1))
 
 def p_ifelseifelse(p):
@@ -551,7 +586,7 @@ def p_valorNulo(p):
     p[0] = OperacionNULO(p[1],p.lineno(1), buscar_columna(p.slice[1]))
 
 def p_error(p):
-    #agregarError('sintantico',  "Sintaxis no reconocida \"{0}\"".format(p.value) ,p.lineno+1, buscar_columna(p))
+    agregarError('sintantico',  "Sintaxis no reconocida \"{0}\"".format(p.value) ,p.lineno+1, buscar_columna(p))
     print('Error sintactico')
 
 

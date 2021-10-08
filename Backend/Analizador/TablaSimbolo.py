@@ -11,10 +11,23 @@ class Tipo(Enum):
     INVALIDO = 9
 
 
+class ref:
+    def __init__(self, valor):
+        self.val = valor
+
+    def set(self, nuevo):
+        self.val = nuevo
+
+    def get(self):
+        return self.val
+
+    
+   
+
 class Simbolo:
     def __init__(self, *args):
         self.id = args[0]
-        self.valor = args[1]
+        self.valor = ref(args[1])
         self.tipo = self.verficar(args[1],args[2])
         self.ambito = args[3]
         self.line = args[4]
@@ -33,7 +46,9 @@ class Simbolo:
             elif isinstance(valor, float): 
                 return Tipo.DECIMAL
             elif isinstance(valor, str): 
-                 return Tipo.STRING 
+                return Tipo.STRING 
+            elif isinstance(valor, chr):
+                return Tipo.CHAR
             elif valor == None :
                 return Tipo.NULO
 
@@ -66,6 +81,7 @@ class TablaSimbolos:
         return False
     
     def obtener(self,id,tabla):
+      
         if id in tabla.simbolos:
             return tabla.simbolos[id]
         if tabla.padre: 
@@ -81,4 +97,3 @@ class TablaSimbolos:
 
     def actualizar(self, simbolo):
         self.simbolos[simbolo.id].valor.set(simbolo.valor.get())
-
