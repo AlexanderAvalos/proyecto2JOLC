@@ -222,78 +222,7 @@ class Printval(Instruccion):
         self.val = val 
         self.line = line
         super().__init__()      
-    
 
-#operaciones 
-#numerica
-class OperacionNumerica(Instruccion):
-    def __init__(self,opIzq,opDer,operacion,line,columna):
-        self.opIzq = opIzq
-        self.opDer = opDer
-        self.operacion = self.verficarNum(operacion)
-        self.line = line
-        self.columna = columna
-        super().__init__()
-
-    def verficarNum(self,operacion):
-        if operacion == '+':
-            return exp.OPERACION_NUMERICA.SUMA
-        elif  operacion == '-':
-            return exp.OPERACION_NUMERICA.RESTA
-        elif  operacion == '*':
-            return exp.OPERACION_NUMERICA.MULTIPLICACION
-        elif  operacion == '/':
-            return exp.OPERACION_NUMERICA.DIVISION
-        elif  operacion == '%':
-            return exp.OPERACION_NUMERICA.MODULAR
-        elif  operacion == '^':
-            return exp.OPERACION_NUMERICA.POTENCIA    
-        else:
-            print('error')
-
-#relacional
-class OperacionRelacional(Instruccion):
-    def __init__(self,opIzq,opDer,operacion,line,columna):
-        self.opIzq = opIzq
-        self.opDer = opDer
-        self.operacion = self.verficarRelacional(operacion)
-        self.line = line
-        self.columna = columna
-        super().__init__()
-    
-    def verficarRelacional(self,operacion):
-        if operacion == '==':
-            return exp.OPERACION_RELACIONAL.IGUAL
-        elif  operacion == '>':
-            return exp.OPERACION_RELACIONAL.MAYOR
-        elif  operacion == '<':
-            return exp.OPERACION_RELACIONAL.MENOR
-        elif  operacion == '<=':
-            return exp.OPERACION_RELACIONAL.MENORQUE
-        elif  operacion == '>=':
-            return exp.OPERACION_RELACIONAL.MAYORQUE
-        elif  operacion == '!=':
-            return exp.OPERACION_RELACIONAL.DIFERENTE
-        else:
-            print('error')
-
-#logica
-class OperacionLogica(Instruccion):
-    def __init__(self,opIzq,opDer,operacion,line,columna):
-        self.opIzq = opIzq
-        self.opDer = opDer
-        self.operacion = self.verficarLog(operacion)
-        self.line = line
-        self.columna = columna
-        super().__init__()
-    
-    def verficarLog(self,operacion):
-        if operacion == '&&':
-            return exp.OPERACION_LOGICA.AND
-        elif  operacion == '||':
-            return exp.OPERACION_LOGICA.OR
-        else:
-            print('error')
 
 #operaciones aparte 
 class OperacionBinaria(Instruccion):
@@ -372,8 +301,8 @@ class OperacionString(Instruccion):
         
 #valores
 class OperacionNumero(Instruccion):
-    def __init__(self,num, line, columna) :
-        self.num = num
+    def __init__(self,val, line, columna) :
+        self.val = val
         self.line = line 
         self.columna = columna
         super().__init__()
@@ -386,15 +315,15 @@ class OperacionVariable(Instruccion):
         super().__init__()
 
 class OperacionCaracter(Instruccion):
-    def __init__(self, car, linea,columna):
-        self.car = car
+    def __init__(self, val, linea,columna):
+        self.val= val
         self.linea = linea 
         self.columna = columna
         super().__init__()
 
 class OperacionCadena(Instruccion):
-    def __init__(self,cadena,linea,columna):
-        self.cadena = cadena
+    def __init__(self,val,linea,columna):
+        self.val = val
         self.linea = linea 
         self.columna = columna
         super().__init__()

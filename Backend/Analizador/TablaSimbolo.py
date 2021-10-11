@@ -11,23 +11,13 @@ class Tipo(Enum):
     INVALIDO = 9
 
 
-class ref:
-    def __init__(self, valor):
-        self.val = valor
-
-    def set(self, nuevo):
-        self.val = nuevo
-
-    def get(self):
-        return self.val
-
     
-   
+
 
 class Simbolo:
     def __init__(self, *args):
         self.id = args[0]
-        self.valor = ref(args[1])
+        self.valor = args[1]
         self.tipo = self.verficar(args[1],args[2])
         self.ambito = args[3]
         self.line = args[4]
@@ -47,8 +37,6 @@ class Simbolo:
                 return Tipo.DECIMAL
             elif isinstance(valor, str): 
                 return Tipo.STRING 
-            elif isinstance(valor, chr):
-                return Tipo.CHAR
             elif valor == None :
                 return Tipo.NULO
 
@@ -70,7 +58,7 @@ class TablaSimbolos:
     def getPadre(self):
         return self.padre
 
-    def existepadre(self,tabla):
+    def existepadre(self,id,tabla):
         return self.verificar(id,tabla)
 
     def verificar(self,id,tabla):
@@ -79,21 +67,28 @@ class TablaSimbolos:
         if tabla.padre:
             return self.verificar(id,tabla.padre)
         return False
-    
-    def obtener(self,id,tabla):
-      
+
+    def get(self, id, tabla):
         if id in tabla.simbolos:
             return tabla.simbolos[id]
         if tabla.padre: 
             return self.get(id,tabla.padre)
         return False
 
-    def get(self, id, tabla):
-        if id in tabla.simbolos:
-            return tabla.simbolos[id].valor.get()
-        if tabla.padre: 
-            return self.get(id,tabla.padre)
-        return False
-
     def actualizar(self, simbolo):
         self.simbolos[simbolo.id].valor.set(simbolo.valor.get())
+
+class Cuadruplo: 
+    def __init__(self,resultado,arg1,arg2,operador):
+        self.resultado = resultado
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.operador = operador
+    
+class Cuadruplos:
+    def __init__(self):
+        self.cuadruplos =[]
+        self.indice_temporal = 0
+
+    def agregar(self, cuadruplo):
+        self.cuadruplos.append(cuadruplo)

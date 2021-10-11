@@ -451,7 +451,7 @@ def p_operacionLogicas(p):
     '''operacion   : operacion AND              operacion
                    | operacion OR               operacion
     '''
-    p[0] = OperacionLogica(p[1],p[3],p[2],p.lineno(1),buscar_columna(p.slice[2]))  
+    p[0] = OperacionBinaria(p[1],p[3],p[2],p.lineno(1),buscar_columna(p.slice[2]))  
 
 def p_operacionRelacional(p):
     '''operacion    : operacion IGUALIGUAL      operacion 
@@ -462,7 +462,7 @@ def p_operacionRelacional(p):
                     | operacion MAYORIGUAL      operacion
     '''
    
-    p[0] = OperacionRelacional(p[1],p[3],p[2],p.lineno(1),buscar_columna(p.slice[2]))  
+    p[0] = OperacionBinaria(p[1],p[3],p[2],p.lineno(1),buscar_columna(p.slice[2]))  
 
 def p_operacionAritmeticas(p):
     '''operacion    : operacion MAS             operacion
@@ -472,7 +472,7 @@ def p_operacionAritmeticas(p):
                     | operacion MODULO          operacion
                     | operacion POTENCIA        operacion
     '''
-    p[0] = OperacionNumerica(p[1],p[3],p[2],p.lineno(1),buscar_columna(p.slice[2]))  
+    p[0] = OperacionBinaria(p[1],p[3],p[2],p.lineno(1),buscar_columna(p.slice[2]))  
 
 def p_operacionUnarias(p):
     '''operacion   : MENOS  operacion %prec UMENOS
