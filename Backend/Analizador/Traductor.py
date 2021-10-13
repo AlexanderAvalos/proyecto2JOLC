@@ -48,7 +48,7 @@ class Traducir:
         self.salida += "\n"
 
     def traducir(self,instruccion):
-        self.salida = 'package main'+' \n'+ 'import(\"fmt\") \nvar stack [30000]float64  \nvar heap [300000]float64  \nvar P,H float64\n'
+        self.salida = 'package main'+'\npackage math'+' \n'+ 'import(\"fmt\") \nvar stack [30000]float64  \nvar heap [300000]float64  \nvar P,H float64\n'
         self.recolectar(instruccion)
         self.salida = self.salida +  str(self.imprimir_temporales())
         self.imprimir3D()
@@ -106,7 +106,7 @@ class Traducir:
             return self.procesar_valor(operacion,ts)
 
     def procesar_operacionBinaria(self,operacion,ts):
-        if operacion.operacion != '/' and operacion.operacion != '^' :
+        if operacion.operacion != '/' and operacion.operacion != '^' and operacion.operacion != '%' :
             op1 = self.procesar_operacion(operacion.opIzq, ts)
             op2 = self.procesar_operacion(operacion.opDer, ts)
             operador = operacion.operacion
@@ -184,42 +184,83 @@ class Traducir:
                 self.cuadruplos.agregar(nuevo_cuadruploeti2)
                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti2)
                 return temp
+            elif operacion.operacion == '%':
+                op1 = self.procesar_operacion(operacion.opIzq, ts)
+                op2 = self.procesar_operacion(operacion.opDer, ts)
+                operador = operacion.operacion
+                temp = self.generar_temporal()
+                nuevo_cuadruplo = TS.Cuadruplo(temp,"math.mod({0},{1})".format(op1,op2),"","")
+                self.cuadruplos.agregar(nuevo_cuadruplo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+                return temp
             else:
-                self.generar_potencia(operacion.opIzq,operacion.opDer,ts)
+                return self.generar_potencia(operacion.opIzq,operacion.opDer,ts)
 
     def generar_potencia(self,operador1,operador2,ts):
-        op1 = self.procesar_valor(operador1,ts)
-        op2 = self.procesar_valor(operador2,ts)
-        cont = 0
+        op1 = self.procesar_operacion(operador1,ts)
+        op2 = self.procesar_operacion(operador2,ts)
         if op2 == 0: 
-            print("temporal",cont," = 1" )
-            print("temporal",cont)
+            temp = self.generar_temporal()
+            nuevo_cuadruplop1 = TS.Cuadruplo(temp,"1","","=")
+            self.cuadruplos.agregar(nuevo_cuadruplop1)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplop1)
+            return temp
         elif op2 == 1:
-            print("temporal",cont," = ",op1)
-            print("temporal",cont)
+            temp = self.generar_temporal()
+            nuevo_cuadruplop1 = TS.Cuadruplo(temp,op1,"","=")
+            self.cuadruplos.agregar(nuevo_cuadruplop1)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplop1)
+            return temp
         elif op2 == 2:
-            print("temporal",cont," = ",op1, " * ", op1 )
-            print("temporal",cont)
+            temp = self.generar_temporal()
+            nuevo_cuadruplop1 = TS.Cuadruplo(temp,op1,op1,"*")
+            self.cuadruplos.agregar(nuevo_cuadruplop1)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplop1)
+            return temp
         elif op2 > 2:
-                print("temporaln 1 = ",op1, " * ", op1 )
-                for num in range(2,op2):
-                    print("temporaln",num, "= temporaln",num-1 ,"*", op1)
-                    cont = num
-                print("temporal",cont)
+            temp = self.generar_temporal()
+            nuevo_cuadruplop1 = TS.Cuadruplo(temp,op1,op1,"*")
+            self.cuadruplos.agregar(nuevo_cuadruplop1)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplop1)
+            tempasado = temp
+            for num in range(2,op2):
+                tempn = self.generar_temporal()
+                nuevo_cuadruplop1 = TS.Cuadruplo(tempn,tempasado,op1,"*")
+                self.cuadruplos.agregar(nuevo_cuadruplop1)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadruplop1)
+                tempasado = tempn
+            return tempn
 
     def procesar_valor(self,expresion,ts):
         if isinstance(expresion,OperacionVariable):
             if ts.existepadre(expresion.id,ts):     
                 valor = ts.get(expresion.id,ts)
                 if "[" in valor.valor:
-                    temp = self.generar_temporal()
-                    nuevo_cuadrupo = TS.Cuadruplo(temp,valor.valor,"","=")
+                    valaux = valor.valor.split(sep =" ")
+                    print(valaux)
+                    nuevo_cuadrupo = TS.Cuadruplo(valaux[0],valaux[2],"","=")
                     self.cuadruplos.agregar(nuevo_cuadrupo)
-                    self.etiqueta[self.etiqueta].append(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    temp = self.generar_temporal()
+                    nuevo_cuadrupo = TS.Cuadruplo(temp,valaux[5],"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                     return temp
                 return valor.valor
         else:
-            return expresion.val
+            if isinstance(expresion,OperacionCadena):
+                cadena = expresion.val
+                indiceinicial = self.indice_heap
+                indiceheap = self.generar_heap()
+                temp = self.generar_temporal()
+                valaux = indiceheap.split(sep =" ")
+                print(temp, "=", valaux[8])
+                for car in cadena.replace("\"",""): 
+                    print(indiceheap +' = ' + str(ord(car)))
+                    indiceheap = self.generar_heap()
+                return temp
+            else:     
+                return expresion.val
 
     def generar_temporal(self):
         salida = "t{0}".format(self.indice_temporal)
@@ -227,13 +268,13 @@ class Traducir:
         return salida
 
     def generarstack(self):
-        salida = "P = {0} ;".format(self.indice_heap)
+        salida = "P = {0} ;".format(self.indice_stack)
         salida += "\n  stack[int(P)]"
-        self.indice_heap += 1
+        self.indice_stack += 1
         return salida
     
     def regresarstack(self,inicio):
-        aux = self.indice_heap - 1
+        aux = self.indice_stack - 1
         aux2 = inicio.split(sep = " ")
         ret = self.contardif(aux,aux2[2])
         salida = "P = P - " + str(ret) + ";"
@@ -257,4 +298,13 @@ class Traducir:
     def generar_if(self):
         salida = "if{0}".format(self.indice_if)
         self.indice_if += 1
+        return salida
+
+    def generar_heap(self):
+        if self.indice_heap == 0:
+            salida = "  H = H + 0;"
+        else:
+            salida = "  H = H + 1;"
+        salida += "\n  HEAP[int(H)]"
+        self.indice_heap += 1
         return salida
