@@ -250,15 +250,30 @@ class Traducir:
         else:
             if isinstance(expresion,OperacionCadena):
                 cadena = expresion.val
-                indiceinicial = self.indice_heap
-                indiceheap = self.generar_heap()
                 temp = self.generar_temporal()
-                valaux = indiceheap.split(sep =" ")
-                print(temp, "=", valaux[8])
+                nuevo_cuadrupo = TS.Cuadruplo(temp,"H","","=")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                 for car in cadena.replace("\"",""): 
-                    print(indiceheap +' = ' + str(ord(car)))
                     indiceheap = self.generar_heap()
+                    nuevo_cuadrupo = TS.Cuadruplo(indiceheap,str(ord(car)),"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                 return temp
+            elif isinstance(expresion,OperacionBooleana):
+                print(expresion.val)
+                if expresion.val.lower() == 'false':
+                    temp = self.generar_temporal()
+                    nuevo_cuadrupo = TS.Cuadruplo(temp,0,"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    return temp
+                else:
+                    temp = self.generar_temporal()
+                    nuevo_cuadrupo = TS.Cuadruplo(temp,1,"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    return temp
             else:     
                 return expresion.val
 
@@ -302,9 +317,9 @@ class Traducir:
 
     def generar_heap(self):
         if self.indice_heap == 0:
-            salida = "  H = H + 0;"
+            salida = "HEAP[int(H)]"
         else:
-            salida = "  H = H + 1;"
-        salida += "\n  HEAP[int(H)]"
+            salida = "H = H + 1 ;\n"
+            salida += "  HEAP[int(H)]"
         self.indice_heap += 1
         return salida
