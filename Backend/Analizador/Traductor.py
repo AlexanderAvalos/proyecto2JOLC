@@ -25,13 +25,14 @@ class Traducir:
         self.etiqueta = "main"
         self.ambito_ejecucion = "global"
         self.indice_if = 0
+        self.imp_cadena = False
         
     def agregar_token(self,id,temporal,linea):
         self.pila.append({"id":id, "valor":temporal, "ambito":self.ambito_ejecucion, "linea": linea})
 
     def imprimir3D(self):
         for etiqueta in self.etiquetas:
-            self.salida +=  etiqueta + ': \n'
+            self.salida +=  etiqueta + '(){ \n'
             for cuadruplo in self.etiquetas[etiqueta]:
                 if cuadruplo.operador == "if":
                     self.salida += "  if ({0})  goto {1};".format(cuadruplo.arg1, cuadruplo.resultado) + "\n"
@@ -41,11 +42,13 @@ class Traducir:
                     self.salida += "  goto {0};".format(cuadruplo.resultado) + "\n"
                 elif cuadruplo.operador == "etiqueta":
                     self.salida += "  {0}:".format(cuadruplo.resultado) + "\n"
+                elif cuadruplo.operador == "metodo":
+                    self.salida += "  {0}".format(cuadruplo.resultado) + "\n"
                 elif cuadruplo.operador != "=":
                     self.salida += "  {0} = {1} {2} {3};".format(cuadruplo.resultado,cuadruplo.arg1,cuadruplo.operador,cuadruplo.arg2) + "\n"
                 else:
                     self.salida += "  {0} = {1} {2};".format(cuadruplo.resultado,cuadruplo.arg1,cuadruplo.arg2) + "\n"
-        self.salida += "\n"
+        self.salida += "}\n"
 
     def traducir(self,instruccion):
         self.salida = 'package main'+'\npackage math'+' \n'+ 'import(\"fmt\") \nvar stack [30000]float64  \nvar heap [300000]float64  \nvar P,H float64\n'
@@ -103,7 +106,7 @@ class Traducir:
                     print('variable')
                 elif isinstance(val,OperacionCadena) or isinstance(val,OperacionCaracter):
                     print('cadena')
-                    nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"%c","print")
+                    nuevo_cuadruploError = TS.Cuadruplo("Generar_Impresion();","","","metodo")
                     self.cuadruplos.agregar(nuevo_cuadruploError)
                     self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
                 elif isinstance(val,OperacionNumero):
@@ -117,9 +120,12 @@ class Traducir:
                         self.cuadruplos.agregar(nuevo_cuadruploError)
                         self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
                 else:
-                    nuevo_cuadruploError = TS.Cuadruplo(" ","int({0})".format(op1),"d%","print")
-                    self.cuadruplos.agregar(nuevo_cuadruploError)
-                    self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
+                    if self.imp_cadena == True:
+                        print('a')
+                    else:
+                        nuevo_cuadruploError = TS.Cuadruplo(" ","int({0})".format(op1),"d%","print")
+                        self.cuadruplos.agregar(nuevo_cuadruploError)
+                        self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
         else: 
             print('b')
 #operaciones y valores
@@ -138,7 +144,7 @@ class Traducir:
             return self.procesar_valor(operacion,ts)
 
     def procesar_operacionBinaria(self,operacion,ts):
-        if operacion.operacion != '/' and operacion.operacion != '^' and operacion.operacion != '%' :
+        if operacion.operacion != '/' and operacion.operacion != '^' and operacion.operacion != '%' and operacion.operacion != '*':
             op1 = self.procesar_operacion(operacion.opIzq, ts)
             op2 = self.procesar_operacion(operacion.opDer, ts)
             operador = operacion.operacion
@@ -225,8 +231,53 @@ class Traducir:
                 self.cuadruplos.agregar(nuevo_cuadruplo)
                 self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
                 return temp
+            elif operacion.operacion == '*':
+                if (isinstance(operacion.opIzq, OperacionCadena) or isinstance(operacion.opDer, OperacionCadena)):
+                    self.imp_cadena = True
+                    local = TS.TablaSimbolos()
+                    op1 = self.procesar_operacion(operacion.opIzq, ts)
+                    op2 = self.procesar_operacion(operacion.opDer, ts)
+                    operador = operacion.operacion
+                    #parametro1
+                    temp = self.generarstack()
+                    simbolo = TS.Simbolo(op1,temp , Tipo.STRING, '', '','')
+                    local.agregar(simbolo)
+                    self.agregar_token(op1,temp,'')
+                    nuevo_cuadruplo = TS.Cuadruplo(temp,op1,"", "=")
+                    self.cuadruplos.agregar(nuevo_cuadruplo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+                    #parametro2
+                    temp = self.generarstack()
+                    simbolo = TS.Simbolo(op2,temp , Tipo.STRING, '', '','')
+                    local.agregar(simbolo)
+                    self.agregar_token(op2,temp,'')
+                    nuevo_cuadruplo = TS.Cuadruplo(temp,op2,"", "=")
+                    self.cuadruplos.agregar(nuevo_cuadruplo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+                    nuevo_cuadruplo = TS.Cuadruplo("Generar_Multiplicacion();","","", "metodo")
+                    self.cuadruplos.agregar(nuevo_cuadruplo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+                    return self.generar_recCadena(local)
+                elif isinstance(operacion.opDer,OperacionCadena):
+                    print('concatenacion')
+                    
+                else: 
+                    op1 = self.procesar_operacion(operacion.opIzq, ts)
+                    op2 = self.procesar_operacion(operacion.opDer, ts)
+                    operador = operacion.operacion
+                    temp = self.generar_temporal()
+                    nuevo_cuadruplo = TS.Cuadruplo(temp,op1,op2,operador)
+                    self.cuadruplos.agregar(nuevo_cuadruplo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+                    return temp
             else:
                 return self.generar_potencia(operacion.opIzq,operacion.opDer,ts)
+
+    def generar_recCadena(self, tablalocal):
+        for simbolo in tablalocal.simbolos:
+            print(simbolo,"indice H", tablalocal.get(simbolo,tablalocal).valor)
+        temp = self.generar_temporal()
+        return temp
 
     def generar_potencia(self,operador1,operador2,ts):
         op1 = self.procesar_operacion(operador1,ts)
@@ -291,6 +342,12 @@ class Traducir:
                     nuevo_cuadrupo = TS.Cuadruplo(indiceheap,str(ord(car)),"","=")
                     self.cuadruplos.agregar(nuevo_cuadrupo)
                     self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    nuevo_cuadrupoe = TS.Cuadruplo("H","H","1","+")
+                    self.cuadruplos.agregar(nuevo_cuadrupoe)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupoe)
+                nuevo_cuadrupo = TS.Cuadruplo(indiceheap,-1,"","=")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                 nuevo_cuadrupoe = TS.Cuadruplo("H","H","1","+")
                 self.cuadruplos.agregar(nuevo_cuadrupoe)
                 self.etiquetas[self.etiqueta].append(nuevo_cuadrupoe)
@@ -319,9 +376,9 @@ class Traducir:
                         nuevo_cuadrupo = TS.Cuadruplo(indiceheap,str(ord(car)),"","=")
                         self.cuadruplos.agregar(nuevo_cuadrupo)
                         self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
-                    nuevo_cuadrupoe = TS.Cuadruplo("H","H","1","+")
-                    self.cuadruplos.agregar(nuevo_cuadrupoe)
-                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupoe)
+                    nuevo_cuadrupo = TS.Cuadruplo(indiceheap,-1,"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                     return temp
             else:     
                 return expresion.val
@@ -367,10 +424,7 @@ class Traducir:
         return salida
 
     def generar_heap(self):
-        if self.indice_heap == 0:
-            salida = "HEAP[int(H)]"
-        else:
-            salida = "H = H + 1 ;\n".format(self.indice_heap)
-            salida += "  HEAP[int(H)]"
+        salida = "HEAP[int(H)]"
+
         self.indice_heap += 1
         return salida
