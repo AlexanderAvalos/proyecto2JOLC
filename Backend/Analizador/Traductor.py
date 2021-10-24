@@ -71,9 +71,11 @@ class Traducir:
     def recolectar(self, instruccion):
         if not isinstance(instruccion, StructsIn) or not isinstance(instruccion, Funcion):
             self.etiquetas["main"] = []
+            
             for instr in instruccion:
                 if isinstance(instr, Declaracion): self.recolectar_declaracion(instr,self.ts)
                 elif isinstance(instr,Printval): self.procesar_impresion(instr,self.ts)
+                elif isinstance(instr,If): self.procesar_if(instr,self.ts)
         else: 
             print('funciones y structs')
 
@@ -99,7 +101,7 @@ class Traducir:
 #impresion
     def procesar_impresion(self,instruccion, ts):
         valor = instruccion.val
-        if(instruccion.tipo == ['print']):
+        if(instruccion.tipo == ['print'] or instruccion.tipo == ['println']):
             for val in valor:
                 op1 = self.procesar_operacion(val,ts)
                 if isinstance(val,OperacionVariable):
@@ -122,12 +124,72 @@ class Traducir:
                 else:
                     if self.imp_cadena == True:
                         print('a')
-                    else:
-                        nuevo_cuadruploError = TS.Cuadruplo(" ","int({0})".format(op1),"d%","print")
+                    else: 
+                        nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"f%","print")
                         self.cuadruplos.agregar(nuevo_cuadruploError)
                         self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
         else: 
-            print('b')
+            print('error')
+
+
+    def procesar_if(self,instruccion,ts):
+        s_if = instruccion.s_if
+        s_else = instruccion.s_else
+        s_elif = instruccion.s_elif
+        #entra al if
+        nueva_etiqueta = self.generar_etiqueta()
+        last_temp = self.procesar_operacion(s_if.condicion, ts)
+        nuevo_cuadruplo = TS.Cuadruplo(nueva_etiqueta,last_temp,"","if")
+        self.cuadruplos.agregar(nuevo_cuadruplo)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+        #generamos else if
+        contador = []
+        if s_elif:
+            for s_if2 in s_elif:
+                last_temp = self.procesar_operacion(s_if2.condicion,ts)
+                nueva_etiquetaelif = self.generar_etiqueta()
+                contador.append(nueva_etiquetaelif)
+                nuevo_cuadruploelif = TS.Cuadruplo(nueva_etiquetaelif,last_temp,"","if")
+                self.cuadruplos.agregar(nuevo_cuadruploelif)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadruploelif)
+        #generamos else
+        if s_else:
+            self.procesar_sentencias(s_else.sentencias,ts)
+        #generamos etiqueta de salida
+        nueva_etiqueta2 = self.generar_etiqueta()
+        nuevo_cuadruplogoto = TS.Cuadruplo(nueva_etiqueta2,"","","goto")
+        self.cuadruplos.agregar(nuevo_cuadruplogoto)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruplogoto)
+        nuevo_cuadruploeti = TS.Cuadruplo(nueva_etiqueta,"","","etiqueta")
+        self.cuadruplos.agregar(nuevo_cuadruploeti)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
+        self.procesar_sentencias(s_if.sentencias,ts)
+        if s_elif:
+            con =0
+            for s_if2 in s_elif:
+                nuevo_cuadruploeti = TS.Cuadruplo(contador[con],"","","etiqueta")
+                self.cuadruplos.agregar(nuevo_cuadruploeti)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
+                self.procesar_sentencias(s_if2.sentencias,ts)
+                con += 1
+        nuevo_cuadruplosali = TS.Cuadruplo(nueva_etiqueta2,"","","etiqueta")
+        self.cuadruplos.agregar(nuevo_cuadruplosali)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruplosali)
+#sentencias 
+
+    def procesar_sentencias(self,sentencias,ts,llamada = False):
+        local = None
+        if llamada:
+            local = ts;
+        else:
+            local = TS.TablaSimbolos()
+            local.setPadre(ts)
+        
+        for sentencia in sentencias:
+            if isinstance(sentencia, Declaracion): self.recolectar_declaracion(sentencia,local)
+            elif isinstance(sentencia,Printval): self.procesar_impresion(sentencia,local)
+            elif isinstance(sentencia,If): self.procesar_if(sentencia,local)
+    
 #operaciones y valores
     def procesar_operacion(self,operacion,ts):
         if isinstance(operacion, OperacionBinaria):
@@ -407,7 +469,6 @@ class Traducir:
     def contardif(self,inicio,fin):
         cont = 0
         ini = int(inicio)
-        print(ini, " ", fin)
         while(int(ini) != int(fin)):
             ini -= 1
             cont += 1

@@ -11,17 +11,15 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/')
+@app.route('/serv', methods = ['POST'])
 def inicio():
-    with open('entradaprueba.txt') as f:
-        s=f.read()
-        f.close()
-    Instruccion = g.parse(s)
+    data = request.json
+    input = data['valor']
+    Instruccion = g.parse(input)
     ts_global = TS.TablaSimbolos()
     funciona = tradu.Traducir(Instruccion,ts_global)
     funciona.traducir(Instruccion)
     salida = funciona.salida
-    
     return salida
 
 if __name__ == '__main__':

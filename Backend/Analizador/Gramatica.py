@@ -45,7 +45,9 @@ reservadas = {
     'length':'LENGTH',
     'trunc':'TRUNC',
     'global':'GLOBAL',
-    'local': 'LOCALR' 
+    'local': 'LOCALR' ,
+    'elseif':'ELSEIF'
+
 }
 
 tokens = [
@@ -385,7 +387,7 @@ def p_elseif3(p):
     p[0] = [p[1]]
 
 def p_elif2(p):
-    'aux : ELSE IF operacion instrucciones'
+    'aux : ELSEIF operacion instrucciones'
     p[0] = SentenciaIf(p[2],p[3],p.lineno(1))
 
 def p_ifelseifelse(p):
@@ -587,7 +589,6 @@ def p_valorNulo(p):
 
 def p_error(p):
     agregarError('sintantico',  "Sintaxis no reconocida \"{0}\"".format(p.value) ,p.lineno+1, buscar_columna(p))
-    print('Error sintactico')
 
 
 input = ""
