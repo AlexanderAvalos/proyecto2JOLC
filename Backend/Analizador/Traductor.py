@@ -2,11 +2,9 @@ from os import sep
 from Instruccion import Instruccion
 import Gramatica as g
 import TablaSimbolo as TS
-import math
 from Expresion import *
 from Instruccion import *
 import Error as err
-import subprocess
 
 
 
@@ -55,7 +53,6 @@ class Traducir:
         self.recolectar(instruccion)
         self.salida = self.salida +  str(self.imprimir_temporales())
         self.imprimir3D()
-        print(self.salida)
 
     def imprimir_temporales(self):
         temporales = 'var '
@@ -76,6 +73,8 @@ class Traducir:
                 if isinstance(instr, Declaracion): self.recolectar_declaracion(instr,self.ts)
                 elif isinstance(instr,Printval): self.procesar_impresion(instr,self.ts)
                 elif isinstance(instr,If): self.procesar_if(instr,self.ts)
+                elif isinstance(instr,While): self.procesar_while(instr,self.ts)
+                elif isinstance(instr,For): self.procesar_for(instr,self.ts)
         else: 
             print('funciones y structs')
 
@@ -105,7 +104,9 @@ class Traducir:
             for val in valor:
                 op1 = self.procesar_operacion(val,ts)
                 if isinstance(val,OperacionVariable):
-                    print('variable')
+                    nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"d%","print")
+                    self.cuadruplos.agregar(nuevo_cuadruploError)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
                 elif isinstance(val,OperacionCadena) or isinstance(val,OperacionCaracter):
                     print('cadena')
                     nuevo_cuadruploError = TS.Cuadruplo("Generar_Impresion();","","","metodo")
@@ -131,7 +132,7 @@ class Traducir:
         else: 
             print('error')
 
-
+#if
     def procesar_if(self,instruccion,ts):
         s_if = instruccion.s_if
         s_else = instruccion.s_else
@@ -175,8 +176,29 @@ class Traducir:
         nuevo_cuadruplosali = TS.Cuadruplo(nueva_etiqueta2,"","","etiqueta")
         self.cuadruplos.agregar(nuevo_cuadruplosali)
         self.etiquetas[self.etiqueta].append(nuevo_cuadruplosali)
-#sentencias 
+#while
+    def procesar_while(self,instruccion,ts):
+        nueva_etiquetablucle = self.generar_etiqueta()
+        nuevo_cuadruploblucle = TS.Cuadruplo(nueva_etiquetablucle,"","","etiqueta")
+        self.cuadruplos.agregar(nuevo_cuadruploblucle)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruploblucle)
+        nueva_etiqueta = self.generar_etiqueta()
+        last_temp = self.procesar_operacion(instruccion.condicion, ts)
+        nuevo_cuadruplo = TS.Cuadruplo(nueva_etiqueta,last_temp,"","if")
+        self.cuadruplos.agregar(nuevo_cuadruplo)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+        self.procesar_sentencias(instruccion.sentencias,ts)
+        nuevo_cuadruplogoto = TS.Cuadruplo(nueva_etiquetablucle,"","","goto")
+        self.cuadruplos.agregar(nuevo_cuadruplogoto)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruplogoto)
+        nuevo_cuadruploeti = TS.Cuadruplo(nueva_etiqueta,"","","etiqueta")
+        self.cuadruplos.agregar(nuevo_cuadruploeti)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
 
+    #for 
+    def procesar_for(self,instruccion,ts):
+        'a'
+#sentencias 
     def procesar_sentencias(self,sentencias,ts,llamada = False):
         local = None
         if llamada:
@@ -189,7 +211,8 @@ class Traducir:
             if isinstance(sentencia, Declaracion): self.recolectar_declaracion(sentencia,local)
             elif isinstance(sentencia,Printval): self.procesar_impresion(sentencia,local)
             elif isinstance(sentencia,If): self.procesar_if(sentencia,local)
-    
+            elif isinstance(sentencia,While): self.procesar_while(sentencia,local)
+            elif isinstance(sentencia,For): self.procesar_for(sentencia,local)
 #operaciones y valores
     def procesar_operacion(self,operacion,ts):
         if isinstance(operacion, OperacionBinaria):
