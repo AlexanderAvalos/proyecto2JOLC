@@ -30,12 +30,12 @@ class Traducir:
 
     def imprimir3D(self):
         for etiqueta in self.etiquetas:
-            self.salida +=  etiqueta + '(){ \n'
+            self.salida +=  "func "+etiqueta + '(){ \n'
             for cuadruplo in self.etiquetas[etiqueta]:
                 if cuadruplo.operador == "if":
-                    self.salida += "  if ({0})  goto {1};".format(cuadruplo.arg1, cuadruplo.resultado) + "\n"
+                    self.salida += "  if ({0})  ".format(cuadruplo.arg1)+"{" +" goto {0}; ".format( cuadruplo.resultado) +"}"+ "\n"
                 elif cuadruplo.operador == "print":
-                    self.salida += "  fmt.printf(\"{0}\",{1});".format(cuadruplo.arg2,cuadruplo.arg1) + "\n"
+                    self.salida += "  fmt.Printf(\"{0}\",{1});".format(cuadruplo.arg2,cuadruplo.arg1) + "\n"
                 elif cuadruplo.operador == "goto":
                     self.salida += "  goto {0};".format(cuadruplo.resultado) + "\n"
                 elif cuadruplo.operador == "etiqueta":
@@ -49,7 +49,7 @@ class Traducir:
         self.salida += "}\n"
 
     def traducir(self,instruccion):
-        self.salida = 'package main'+'\npackage math'+' \n'+ 'import(\"fmt\") \nvar stack [30000]float64  \nvar heap [300000]float64  \nvar P,H float64\n'
+        self.salida = 'package main;'+'\npackage math;'+' \n'+ 'import(\"fmt\"); \nvar stack [30101999]float64;  \nvar heap [30101999]float64;  \nvar P,H float64;\n'
         self.recolectar(instruccion)
         self.salida = self.salida +  str(self.imprimir_temporales())
         self.imprimir3D()
@@ -61,7 +61,7 @@ class Traducir:
                 temporales += 't'+str(indiceaux)+', '
             else: 
                 temporales += 't' + str(indiceaux) +' '
-        temporales = temporales +  'float64 \n'
+        temporales = temporales +  'float64; \n'
         return temporales
 
 #metodo recoletar 
@@ -197,7 +197,75 @@ class Traducir:
 
     #for 
     def procesar_for(self,instruccion,ts):
-        'a'
+        condiciones = instruccion.condicional
+        if isinstance(instruccion.condicional, condicionalSimple):
+            'simple'
+        elif isinstance(instruccion.condicional, condicionalRango):
+            'rango'
+            local = TS.TablaSimbolos()
+            local.setPadre(ts)
+            stak = self.generarstack()
+            simbolo = TS.Simbolo(instruccion.id,stak , "for", "for", instruccion.linea, 0)
+            ts.agregar(simbolo)
+            self.agregar_token(instruccion.id,stak,instruccion.linea)
+            nuevo_cuadruplo = TS.Cuadruplo(stak,0,"", "=")
+            self.cuadruplos.agregar(nuevo_cuadruplo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+    #generamos el temporal
+            temp = self.generar_temporal()
+            valaux = stak.split(sep =" ")
+            nuevo_cuadrupo = TS.Cuadruplo(temp,valaux[5],"","=")
+            self.cuadruplos.agregar(nuevo_cuadrupo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+    #generamos la etiqueta recursiva
+            nueva_etiquetablucle = self.generar_etiqueta()
+            nuevo_cuadruploblucle = TS.Cuadruplo(nueva_etiquetablucle,"","","etiqueta")
+            self.cuadruplos.agregar(nuevo_cuadruploblucle)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruploblucle)
+    #operamos los rangos
+            rangoizq = self.procesar_operacion(condiciones.rangoizq,ts)
+            rangoder = self.procesar_operacion(condiciones.rangoder,ts)
+    #generamos los ifs condicionales
+            nueva_etiqueta = self.generar_etiqueta()
+            nuevo_cuadruplo = TS.Cuadruplo(nueva_etiqueta,"{0}>={1}".format(temp,rangoizq),"","if")
+            self.cuadruplos.agregar(nuevo_cuadruplo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+            nuevo_cuadruploeti = TS.Cuadruplo(nueva_etiqueta,"","","etiqueta")
+            self.cuadruplos.agregar(nuevo_cuadruploeti)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
+            nueva_etiqueta2 = self.generar_etiqueta()
+            nuevo_cuadruplo = TS.Cuadruplo(nueva_etiqueta2,"{0}<{1}".format(temp,rangoder),"","if")
+            self.cuadruplos.agregar(nuevo_cuadruplo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+    #if salida
+            nueva_etiquetasalida = self.generar_etiqueta()
+            nuevo_cuadruplo = TS.Cuadruplo(nueva_etiquetasalida,"{0}>{1}".format(temp,rangoder),"","if")
+            self.cuadruplos.agregar(nuevo_cuadruplo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+    #generamos etiqueta de salida
+            nuevo_cuadruplo = TS.Cuadruplo(stak,temp +"+ 1","", "=")
+            self.cuadruplos.agregar(nuevo_cuadruplo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+            self.cuadruplos.agregar(nuevo_cuadrupo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+            nuevo_cuadruplogoto = TS.Cuadruplo(nueva_etiquetablucle,"","","goto")
+            self.cuadruplos.agregar(nuevo_cuadruplogoto)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplogoto)
+    #generamos etiquetas del ciclo
+            nuevo_cuadruploeti = TS.Cuadruplo(nueva_etiqueta2,"","","etiqueta")
+            self.cuadruplos.agregar(nuevo_cuadruploeti)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
+    #generamos etiqueta de salida
+            self.procesar_sentencias(instruccion.sentencias,ts)
+            nuevo_cuadruplo = TS.Cuadruplo(stak,temp +"+ 1","", "=")
+            self.cuadruplos.agregar(nuevo_cuadruplo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruplo)
+            self.cuadruplos.agregar(nuevo_cuadrupo)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+            
+            nuevo_cuadruploeti = TS.Cuadruplo(nueva_etiquetasalida,"","","etiqueta")
+            self.cuadruplos.agregar(nuevo_cuadruploeti)
+            self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
 #sentencias 
     def procesar_sentencias(self,sentencias,ts,llamada = False):
         local = None
@@ -405,7 +473,6 @@ class Traducir:
                 valor = ts.get(expresion.id,ts)
                 if "[" in valor.valor:
                     valaux = valor.valor.split(sep =" ")
-                    print(valaux)
                     nuevo_cuadrupo = TS.Cuadruplo(valaux[0],valaux[2],"","=")
                     self.cuadruplos.agregar(nuevo_cuadrupo)
                     self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
