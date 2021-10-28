@@ -11,8 +11,6 @@ class Tipo(Enum):
     INVALIDO = 9
 
 
-    
-
 
 class Simbolo:
     def __init__(self, *args):
