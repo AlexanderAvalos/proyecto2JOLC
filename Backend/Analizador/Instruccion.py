@@ -142,8 +142,19 @@ class Parametros(Instruccion):
         self.columna = columna
         super().__init__()
     
-
-
+#llamada 
+class llamada(Instruccion): 
+    def __init__(self, idfuncion, parametros, linea):
+        self.idfuncion = idfuncion
+        self.parametros = parametros
+        self.linea = linea 
+        super().__init__()
+#SeReeturn
+class SentenciaReturn(Instruccion):
+    def __init__(self,operacion,linea):
+        self.operacion = operacion
+        self.linea = linea 
+        super().__init__()
 #sentencias 
 #if
 class If(Instruccion):
@@ -191,12 +202,7 @@ class condicionalRango(Instruccion):
         self.liena = linea 
         super().__init__()
 
-#SeReeturn
-class SentenciaReturn(Instruccion):
-    def __init__(self,operacion,linea):
-        self.operacion = operacion
-        self.linea = linea 
-        super().__init__()
+
 #sencontinue
 class SentenciaContinue(Instruccion):
     def __init__(self,line):
@@ -208,13 +214,7 @@ class SentenciaBreak(Instruccion):
         self.line = line
         super().__init__()
 
-#llamada 
-class llamada(Instruccion): 
-    def __init__(self, idfuncion, parametros, linea):
-        self.idfuncion = idfuncion
-        self.parametros = parametros
-        self.linea = linea 
-        super().__init__()
+
 #impresion
 class Printval(Instruccion):
     def __init__(self,tipo,val,line):
