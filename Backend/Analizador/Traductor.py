@@ -41,6 +41,7 @@ class Traducir:
         self.retupper = ""
         self.isfor = False
         self.datoreturn = ""
+        self.salidaerr = ""
 
     def agregar_token(self,id,temporal,linea):
         self.pila.append({"id":id, "valor":temporal, "ambito":self.ambito_ejecucion, "linea": linea})
@@ -90,6 +91,11 @@ class Traducir:
     def recolectar(self, instruccion):
             self.etiquetas["main"] = []
             for instr in instruccion:
+                if self.salidaerr != "":
+                    nuevo_cuadrupo = TS.Cuadruplo( self.salidaerr ,"","","etiqueta")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                    self.salidaerr = ""
                 if isinstance(instr, Declaracion): self.recolectar_declaracion(instr,self.ts)
                 elif isinstance(instr,Funcion): self.recolectar_funcion(instr,self.ts)
                 elif isinstance(instr,Printval): self.procesar_impresion(instr,self.ts)
@@ -861,7 +867,101 @@ class Traducir:
         return temp
 
     def procesar_opearregloget(self,operacion,ts):
-        ''
+        if ts.verificar(operacion.id,ts):
+            valor = ts.get(operacion.id,ts)
+            if "[" in valor.valor:
+                    valaux = valor.valor.split(sep =" ")
+                    nuevo_cuadrupo = TS.Cuadruplo(valaux[0],valaux[2],"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    temp = self.generar_temporal()
+                    nuevo_cuadrupo = TS.Cuadruplo(temp,valaux[5],"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    tempheap = self.generar_temporal()
+                    nuevo_cuadrupo = TS.Cuadruplo(tempheap,"heap[int({0})]".format(temp),"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+            #temp es el arreglo
+            
+            cont = 0
+            for lista in operacion.listaposicion:
+                if cont == 0:
+                    self.salidaerr = self.generarError(operacion.listaposicion,ts,tempheap)
+                    tempaux = self.generar_temporal()
+                    op = self.procesar_operacion(lista.operacion,ts) 
+                    tempresult = self.generar_temporal()    
+                    nuevo_cuadrupo = TS.Cuadruplo(tempaux,tempaux,op,"+")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    nuevo_cuadrupo = TS.Cuadruplo(tempresult,"heap[int({0})]".format(tempaux),"","=")
+                    self.cuadruplos.agregar(nuevo_cuadrupo)
+                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                else:
+                     tempresult = self.generar_temporal()
+                cont +=1
+        else:
+           'error'
+        return tempresult
+
+    def generarError(self,indices,ts,tamini):
+        etiquetasaliv = ""
+        cont = 0
+        posiciones = []
+        for lista in indices:
+                posiciones.append(self.procesar_operacion(lista.operacion,ts))
+                cont+=1
+        for lista in indices:
+            if cont == 1:
+                temp = self.generar_temporal()
+                val = self.procesar_operacion(lista.operacion,ts) 
+                nuevo_cuadrupo = TS.Cuadruplo(temp,val,"","=")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                etiqueta = self.generar_etiqueta()
+                nuevo_cuadrupo = TS.Cuadruplo(etiqueta,"{0} < 1".format(temp),"","if")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                nuevo_cuadrupo = TS.Cuadruplo(etiqueta,"{0} > {1}".format(temp,tamini),"","if")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                etiquetasali = self.generar_etiqueta()
+                nuevo_cuadrupo = TS.Cuadruplo(etiquetasali,"","","goto")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                nuevo_cuadrupo = TS.Cuadruplo(etiqueta,"","","etiqueta")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                self.generarprint(66)
+                self.generarprint(111)
+                self.generarprint(117)
+                self.generarprint(110)
+                self.generarprint(100)
+                self.generarprint(115)
+                self.generarprint(69)
+                self.generarprint(114)
+                self.generarprint(114)
+                self.generarprint(111)
+                self.generarprint(114)
+                if self.salidaerr == "":
+                    etiquetasaliv = self.generar_etiqueta()
+                else:
+                    etiquetasaliv = self.salidaerr
+                nuevo_cuadrupo = TS.Cuadruplo(etiquetasaliv,"","","goto")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+                nuevo_cuadrupo = TS.Cuadruplo(etiquetasali,"","","etiqueta")
+                self.cuadruplos.agregar(nuevo_cuadrupo)
+                self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+            else:
+                etiquetasaliv = self.generar_etiqueta()
+            return etiquetasaliv
+   
+    def generarprint(self,valor):
+        nuevo_cuadrupo = TS.Cuadruplo("",valor,"%"+"c","print")
+        self.cuadruplos.agregar(nuevo_cuadrupo)
+        self.etiquetas[self.etiqueta].append(nuevo_cuadrupo) 
+
     def procesar_opearregloasignacion(self,operacion,ts):
         ''
 
@@ -1142,33 +1242,15 @@ class Traducir:
                 self.cuadruplos.agregar(nuevo_cuadruploIf)
                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploIf)
                 #intrucciones
-                nuevo_cuadruploError = TS.Cuadruplo(" ","77","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","97","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","116","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","104","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","69","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","114","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","114","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","111","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                nuevo_cuadruploError = TS.Cuadruplo(" ","114","%c","print")
-                self.cuadruplos.agregar(nuevo_cuadruploError)
-                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
+                self.generarprint(77)
+                self.generarprint(97)
+                self.generarprint(116)
+                self.generarprint(104)
+                self.generarprint(69)
+                self.generarprint(114)
+                self.generarprint(114)
+                self.generarprint(111)
+                self.generarprint(114)
                 temp = self.generar_temporal()
                 nuevo_cuadruplo = TS.Cuadruplo(temp,"0","","")
                 self.cuadruplos.agregar(nuevo_cuadruplo)
