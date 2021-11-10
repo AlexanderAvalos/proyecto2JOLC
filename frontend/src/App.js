@@ -26,11 +26,6 @@ function App() {
                         <Nav className="mr-auto">
                           <Nav.Link onClick={redireccionInicio} >inicio</Nav.Link>
                           <Nav.Link onClick={redireccionAnalisis}  >Analisis</Nav.Link>
-                          <NavDropdown title="Reportes" id="collasible-nav-dropdown">
-                                <NavDropdown.Item>Errores</NavDropdown.Item>
-                                <NavDropdown.Item >Tabla de Simbolos</NavDropdown.Item>
-                                <NavDropdown.Item >AST</NavDropdown.Item>
-                            </NavDropdown>
                         </Nav>
                     </Navbar.Collapse>
                 </Navbar>

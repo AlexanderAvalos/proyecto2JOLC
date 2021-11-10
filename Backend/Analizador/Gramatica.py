@@ -11,7 +11,6 @@ lst_error = []
 def agregarError(tipo, descripcion, linea, columna):
     global lst_error
     new_error = TokenError(tipo,descripcion,linea,columna)
-    new_error = ''
     lst_error.append(new_error)
 
 

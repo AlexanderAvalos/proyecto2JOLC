@@ -8,6 +8,7 @@ from Estructura_Funcion import *
  
 class Traducir:
     def __init__(self, Instruccion, ts):
+        self.lst_errores = g.lst_error
         self.instruccion = Instruccion
         self.ts = ts
         self.salida = ''
@@ -109,6 +110,8 @@ class Traducir:
                 elif isinstance(instr,DeclaracionArreglos): self.procesar_arreglo(instr,self.ts)
                 elif isinstance(instr,AsignacionArreglo): self.procesar_opearregloasignacion(instr,self.ts) 
                 elif isinstance(instr,DeclaracionStruct):self.procesar_struct(instr,self.ts)
+                else:
+                    'error'
 #instrucciones
 
 #declaracion
@@ -116,7 +119,7 @@ class Traducir:
         if ts.verificar(instruccion.id, ts) == False:
             last_temp = self.procesar_operacion(instruccion.valor,ts)
             temp = self.generarstack()
-            simbolo = TS.Simbolo(instruccion.id,temp , instruccion.tipo, instruccion.ambiente, instruccion.linea, instruccion.columna)
+            simbolo = TS.Simbolo(instruccion.id,temp , instruccion.tipo, self.etiqueta, instruccion.linea, instruccion.columna)
             ts.agregar(simbolo)
             self.agregar_token(instruccion.id,temp,instruccion.linea)
             nuevo_cuadruplo = TS.Cuadruplo(temp,last_temp,"", "=")
@@ -237,6 +240,8 @@ class Traducir:
             self.etiquetas[self.etiqueta].append(nuevo_cuadruploError) 
             self.is_string = False
         else: 
+            nuevo = err.TokenError("Semantico","print invalido",instruccion.linea,instruccion.columna)
+            self.lst_errores.append(nuevo)
             print('error')
 
 #metodo para imprimir
@@ -1010,7 +1015,7 @@ class Traducir:
             aux = 0
             for lista in operacion.listaposicion:
                 aux+=1
-
+            valor = self.procesar_operacion(operacion.operacion,ts)
             cont = 0
             for lista in operacion.listaposicion:
                 if cont == 0:
@@ -1023,10 +1028,10 @@ class Traducir:
                     nuevo_cuadrupo = TS.Cuadruplo(tempresult,"heap[int({0})]".format(temp),"","=")
                     self.cuadruplos.agregar(nuevo_cuadrupo)
                     self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
-                    valor = self.procesar_operacion(operacion.operacion,ts)
-                    nuevo_cuadrupo = TS.Cuadruplo("heap[int({0})]".format(temp),valor,"","=")
-                    self.cuadruplos.agregar(nuevo_cuadrupo)
-                    self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
+                    if aux == 1:
+                        nuevo_cuadrupo = TS.Cuadruplo("heap[int({0})]".format(temp),valor,"","=")
+                        self.cuadruplos.agregar(nuevo_cuadrupo)
+                        self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                     tempaux2 = self.generar_temporal()
                     nuevo_cuadrupo = TS.Cuadruplo(tempaux2,"heap[int({0})]".format(tempresult),"","=")
                     self.cuadruplos.agregar(nuevo_cuadrupo)
@@ -1045,6 +1050,10 @@ class Traducir:
                     self.cuadruplos.agregar(nuevo_cuadrupo)
                     self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)    
                     tempresultaux = self.generar_temporal()
+                    if cont == aux-1:
+                        nuevo_cuadrupo = TS.Cuadruplo("heap[int({0})]".format(tempaux2),valor,"","=")
+                        self.cuadruplos.agregar(nuevo_cuadrupo)
+                        self.etiquetas[self.etiqueta].append(nuevo_cuadrupo)
                     if cont != aux-1:
                         nuevo_cuadrupo = TS.Cuadruplo(tempresultaux,"heap[int({0})]".format(tempaux2),"","=")
                         self.cuadruplos.agregar(nuevo_cuadrupo)
@@ -1873,6 +1882,75 @@ class Traducir:
                     return temp
             else:     
                 return expresion.val
+
+#reportes 
+
+    def graficar(self):
+            try:
+                file = ""
+                file = file +  "digraph TablaSimbolos{\n"
+                file = file + ("graph [ratio = fill]; node [label = \"\\N\", shape=plaintext];\n")
+                file = file + ("graph [bb=\"0,0,352,154\"];\n")
+                file = file + ("err [label = <\n")
+                file = file +("<TABLE ALIGN = \"LEFT\">\n")
+                file = file +("<TR><TD>IDENTIFICADOR</TD><TD>TIPO</TD><TD>AMBITO</TD><TD>LINEA</TD><TD>COLUMNA</TD></TR>\n") 
+                for val2 in self.ts.simbolos:
+                        file = file +("<TR>")
+                        file = file +("<TD>")
+                        file = file +(val2)
+                        file = file +("</TD>")
+                        file = file +("<TD>")
+                        file = file +(str(self.ts.get(val2,self.ts).tipo))
+                        file = file +("</TD>")
+                        file = file +("<TD>")
+                        file = file +(str(self.ts.get(val2,self.ts).ambito))
+                        file = file +("</TD>")
+                        file = file +("<TD>")
+                        file = file +(str(self.ts.get(val2,self.ts).line))
+                        file = file +("</TD>")
+                        file = file +("<TD>")
+                        file = file +(str(self.ts.get(val2,self.ts).column))
+                        file = file +("</TD>")
+                        file = file +("</TR>\n")       
+                file = file +("</TABLE>")
+                file = file +("\n>,];\n")
+                file = file +("}")
+            except:
+                print("Error")
+            finally:
+                return file
+
+    def graficarErrores(self):
+        try:
+            file = ""
+            file = file +("digraph tablaErrores{\n")
+            file = file +("graph [ratio = fill]; node [label = \"\\N\", shape=plaintext];\n")
+            file = file +("graph [bb=\"0,0,352,154\"];\n")
+            file = file +("err [label = <\n")
+            file = file +("<TABLE ALIGN = \"LEFT\">\n")
+            file = file +("<TR><TD>TIPO</TD><TD>DESCRIPCION</TD><TD>LINEA</TD><TD>COLUMNA</TD></TR>\n")
+            for valor in self.lst_errores:
+                file = file +("<TR>")
+                file = file +("<TD>")
+                file = file +(valor.tipo)
+                file = file +("</TD>")
+                file = file +("<TD>")
+                file = file +(valor.descripcion)
+                file = file +("</TD>")
+                file = file +("<TD>")
+                file = file +(str(valor.line))
+                file = file +("</TD>")
+                file = file +("<TD>")
+                file = file +(str(valor.columna))
+                file = file +("</TD>")
+                file = file +("</TR>\n")
+            file = file +("</TABLE>")
+            file = file +("\n>,];\n")
+            file = file +("}")
+        except:
+            print('Error al graficar')
+        finally:
+            return file
 
 #contadores
 

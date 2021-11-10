@@ -16,7 +16,6 @@ const URL = "http://localhost:5000/serv"
 export default function Analisis(){
     const [valor,setvalue] = useState('');
     const [valor2,SetValor] = useState('');
-    const [as,setAst] = useState('digraph{}');
     const [te,setTE] = useState('digraph{}');
     const [ts,setTS] = useState('digraph{}');
 
@@ -26,11 +25,6 @@ export default function Analisis(){
         SetValor(data)
     }
 
-    async function ast(){
-        const obj = {valor}
-        const {data} = await axios.post(URL+"/ast",obj)
-        setAst(data)
-    }
     async function tablaSimbolo(){
         const {data} = await axios.get(URL + '/simbolo')
         setTS( data )
@@ -46,8 +40,6 @@ export default function Analisis(){
         saveAs(blob, 'TablaSimbolo.dot');
         const blob2 = new Blob([te]);
         saveAs(blob2, 'TablaErrores.dot');
-        const blob3 = new Blob([as]);
-        saveAs(blob3, 'AST.dot');
     }
 
     const readFile = (e) =>{
@@ -83,10 +75,9 @@ export default function Analisis(){
                             <div className="graph">
                             <Form.Control as="textarea" rows={3} name="consola" value = {valor2} onChange = {(e)=> SetValor(e.target.valor2)} /><br />
                             <Button variant="primary" onClick={traducir}> Traducir</Button> &nbsp;
-                            {/*<Button variant="secondary" onClick={tablaSimbolo}> Tabla Simbolos</Button> &nbsp;
+                            <Button variant="secondary" onClick={tablaSimbolo}> Tabla Simbolos</Button> &nbsp;
                             <Button variant="danger" onClick={tablaErrores}> Tabla Errores</Button> &nbsp;
-                            <Button variant="success" onClick={ast}> AST</Button><br/><br/>
-                            <Button variant="success" onClick={guardarfile}> Generar dot</Button><br/>*/}
+                            <Button variant="success" onClick={guardarfile}> Generar dot</Button><br/>
                             </div>
                         </div >
                         </Col>
@@ -94,7 +85,7 @@ export default function Analisis(){
                     
                     
                 </Container>
-                <div><Graphviz dot={as}/>
+                                <div>
                 <Graphviz dot={ts}/>
                 <Graphviz dot={te}/></div>
                 
