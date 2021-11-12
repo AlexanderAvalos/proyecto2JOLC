@@ -446,6 +446,11 @@ def p_impresionSimple(p):
     '''
     p[0] = Printval([p[1]], p[3], p.lineno(3))
 
+def p_impresionVacia(p):
+    '''impresion : PRINT PARIZQ  PARDER PUNTOYCOMA
+                 | PRINTLN PARIZQ  PARDER PUNTOYCOMA
+    '''
+    p[0] = Printval([p[1]],None ,p.lineno(3))
 #valores y operaciones 
 #operaciones simples 
 def p_operacionLogicas(p):
