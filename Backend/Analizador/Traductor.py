@@ -111,7 +111,8 @@ class Traducir:
                 elif isinstance(instr,AsignacionArreglo): self.procesar_opearregloasignacion(instr,self.ts) 
                 elif isinstance(instr,DeclaracionStruct):self.procesar_struct(instr,self.ts)
                 else:
-                    'error'
+                    nuevo = err.TokenError("Semantico","instruccion desconocida",0,0)
+                    self.lst_errores.append(nuevo)
 #instrucciones
 
 #declaracion
@@ -144,21 +145,22 @@ class Traducir:
                 for val in valor:
                     op1 = self.procesar_operacion(val,ts)
                     if isinstance(val,OperacionVariable):
-                        if self.is_string:
-                            nuevo_cuadruploError = TS.Cuadruplo("generarprint();","","","metodo")
+                        if self.isfor:
+                            nuevo_cuadruploError = TS.Cuadruplo(" ","int({0})".format(op1),"%"+"c","print")
                             self.cuadruplos.agregar(nuevo_cuadruploError)
                             self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                            self.generarImpresion()
-                            self.is_string = False
                         else:
-                            if self.isfor:
-                                nuevo_cuadruploError = TS.Cuadruplo(" ","int({0})".format(op1),"%"+"c","print")
+                            if self.is_string:
+                                nuevo_cuadruploError = TS.Cuadruplo("generarprint();","","","metodo")
                                 self.cuadruplos.agregar(nuevo_cuadruploError)
                                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
+                                self.generarImpresion()
+                                self.is_string = False
                             else:
-                                nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"%"+"f","print")
-                                self.cuadruplos.agregar(nuevo_cuadruploError)
-                                self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
+                            
+                                    nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"%"+"f","print")
+                                    self.cuadruplos.agregar(nuevo_cuadruploError)
+                                    self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
                         
                     elif isinstance(val,OperacionCadena) or isinstance(val,OperacionCaracter):
                         stack = self.generarstack()
@@ -203,21 +205,22 @@ class Traducir:
                 for val in valor:
                     op1 = self.procesar_operacion(val,ts)
                     if isinstance(val,OperacionVariable):
-                        if self.is_string:
-                            nuevo_cuadruploError = TS.Cuadruplo("generarprint();","","","metodo")
-                            self.cuadruplos.agregar(nuevo_cuadruploError)
-                            self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                            self.generarImpresion()
-                            self.is_string = False
-                        else:
-                            if self.isfor:
+                        if self.isfor:
                                 nuevo_cuadruploError = TS.Cuadruplo(" ","int({0})".format(op1),"%"+"c","print")
                                 self.cuadruplos.agregar(nuevo_cuadruploError)
                                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
-                            else:
-                                nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"%"+"f","print")
+                        else:
+                            if self.is_string:
+                                nuevo_cuadruploError = TS.Cuadruplo("generarprint();","","","metodo")
                                 self.cuadruplos.agregar(nuevo_cuadruploError)
                                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
+                                self.generarImpresion()
+                                self.is_string = False
+                            else:
+                            
+                                    nuevo_cuadruploError = TS.Cuadruplo(" ",op1,"%"+"f","print")
+                                    self.cuadruplos.agregar(nuevo_cuadruploError)
+                                    self.etiquetas[self.etiqueta].append(nuevo_cuadruploError)
                         self.is_string = False
                     elif isinstance(val,OperacionCadena) or isinstance(val,OperacionCaracter):
                         stack = self.generarstack()
@@ -254,9 +257,8 @@ class Traducir:
                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploError) 
                 self.is_string = False
         else: 
-            nuevo = err.TokenError("Semantico","print invalido",instruccion.linea,instruccion.columna)
+            nuevo = err.TokenError("Semantico","print invalido",instruccion.linea,0)
             self.lst_errores.append(nuevo)
-            print('error')
 
 #metodo para imprimir
     def generarImpresion(self):
@@ -525,7 +527,6 @@ class Traducir:
             'simple'
             condicion = instruccion.condicional
             if isinstance(condicion.operacion, OperacionCadena):
-                
                 local = TS.TablaSimbolos()
                 local.setPadre(ts)
                 cond = self.procesar_operacion(condicion.operacion, ts)
@@ -731,6 +732,9 @@ class Traducir:
                 self.cuadruplos.agregar(nuevo_cuadruploeti)
                 self.etiquetas[self.etiqueta].append(nuevo_cuadruploeti)
 
+        else:
+            nuevo = err.TokenError("Semantico","condiciones invalidas",instruccion.linea,0)
+            self.lst_errores.append(nuevo)
 #sentencia continue
     def procesar_continue(self,sentencia, ts):
         if self.continueaux != "":
@@ -739,6 +743,9 @@ class Traducir:
             self.etiquetas[self.etiqueta].append(nuevo_cuadruplogoto)
             self.continueaux = ""
             self.iscontinue = True
+        else:
+            nuevo = err.TokenError("Semantico","comando continue invalido",sentencia.linea,0)
+            self.lst_errores.append(nuevo)
 
 #sentencia break
     def procesar_break(self,sentencia,ts):
@@ -748,6 +755,9 @@ class Traducir:
             self.etiquetas[self.etiqueta].append(nuevo_cuadruplogoto)
             self.breakaux = ""
             self.isbreak = True
+        else:
+            nuevo = err.TokenError("Semantico","comando break invalido",sentencia.linea,0)
+            self.lst_errores.append(nuevo)
 #sentencias 
     def procesar_sentencias(self,sentencias,ts,llamada = False):
         local = None
@@ -774,6 +784,9 @@ class Traducir:
             elif isinstance(sentencia,DeclaracionArreglos): self.procesar_arreglo(sentencia,local) 
             elif isinstance(sentencia,AsignacionArreglo): self.procesar_opearregloasignacion(sentencia,local) 
             elif isinstance(sentencia,DeclaracionStruct):self.procesar_struct(sentencia,local)
+            else:
+                nuevo = err.TokenError("Semantico","sentencia invalida",sentencia.linea,0)
+                self.lst_errores.append(nuevo)
 
 #funciones
     def recolectar_funcion(self,instruccion,ts):
@@ -1027,7 +1040,7 @@ class Traducir:
         else:
            'error'
         return tempresult
-#aqui esta el error
+
     def generarErrorLimites(self,ts,operacion,indicefin):
         
         temp = self.generar_temporal()
@@ -1250,10 +1263,12 @@ class Traducir:
         elif isinstance(operacion,OperacionArregloget):
             return self.procesar_opearregloget(operacion,ts)
         elif isinstance(operacion, OperacionString):
-            ''
+            return self.procesar_String(operacion,ts)
         elif isinstance(operacion, OperacionTrunc):
             ''
-
+        else:
+            nuevo = err.TokenError("Semantico","comando operacion invalido",operacion.linea,operacion.columna)
+            self.lst_errores.append(nuevo)
 #metodo nativo string   
     def procesar_String(self,operacion,ts):
         ''
@@ -2161,11 +2176,6 @@ class Traducir:
             return file
 
 #contadores
-    def generar_stackaux(self):
-        salida = "P = P+1 ;"
-        salida += "\n  stack[int(P)]"
-        self.indice_stack += 1
-        return salida
 
     def generar_temporal(self):
         salida = "t{0}".format(self.indice_temporal)
